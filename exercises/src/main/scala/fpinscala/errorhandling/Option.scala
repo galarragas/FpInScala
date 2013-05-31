@@ -10,10 +10,9 @@ sealed trait Option[+A] {
     case None => default
     case Some(a) => a
   }
-  
-  def flatMap[B](f: A => Option[B]): Option[B] = 
-    map(f) getOrElse None
-  
+
+  def flatMap[B](f: A => Option[B]): Option[B] = map(f) getOrElse None
+
   /*
   Of course, we can also implement `flatMap` with explicit pattern matching.
   */
@@ -22,26 +21,23 @@ sealed trait Option[+A] {
     case Some(a) => f(a)
   }
   
-  def orElse[B>:A](ob: => Option[B]): Option[B] = 
-    this map (Some(_)) getOrElse ob
-  
+  def orElse[B>:A](ob: => Option[B]): Option[B] = map(Some(_)) getOrElse ob
   /*
   Again, we can implement this with explicit pattern matching. 
   */
   def orElse_1[B>:A](ob: => Option[B]): Option[B] = this match {
-    case None => ob 
+    case None => ob
     case _ => this
   }
   
-  def filter(f: A => Boolean): Option[A] = this match {
-    case Some(a) if f(a) => this
-    case _ => None
+  def filter(f: A => Boolean): Option[A] =   {
+//    def extractValue: (Boolean => Option[A]) = (bool => if(bool) this else None)
+    map(f) map (if(_) this else None) getOrElse(None)
   }
   /*
   This can also be defined in terms of `flatMap`.
   */
-  def filter_1(f: A => Boolean): Option[A] =
-    flatMap(a => if (f(a)) Some(a) else None)
+  def filter_1(f: A => Boolean): Option[A] = flatMap(a => if(f(a)) Some(a) else None)
 }
 case class Some[+A](get: A) extends Option[A]
 case object None extends Option[Nothing]
@@ -92,6 +88,7 @@ object Option {
     mkMatcher(pat) flatMap (f => 
     mkMatcher(pat2) map     (g => 
     f(s) && g(s)))
+
   def variance(xs: Seq[Double]): Option[Double] = sys.error("todo")
 
   def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = ???
