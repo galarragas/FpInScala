@@ -41,7 +41,7 @@ class DropTest extends FlatSpec with ShouldMatchers {
 }
 
 class DropWhileTest extends FlatSpec with ShouldMatchers {
-  "DropWhile" should "alwais return empty List when applied to empty list" in {
+  "DropWhile" should "always return empty List when applied to empty list" in {
     dropWhile(List()) (_ => false) should equal(List())
   }
 
@@ -49,12 +49,12 @@ class DropWhileTest extends FlatSpec with ShouldMatchers {
     dropWhile(List("a", "b", "c")) (_ => true) should equal(List())
   }
 
-  it should "return rest of the list after removing elements matching the predicate" in {
-    dropWhile(List("a", "b", "c")) (string => string != "c") should equal(List("c"))
-  }
-
   it should "return same list when using an always false predicate" in {
     dropWhile(List("a", "b", "c")) (_ => false) should equal(List("a", "b", "c"))
+  }
+
+  it should "return rest of the list after finding an element NOT matching the predicate" in {
+    dropWhile(List("a", "a", "aa", "c", "ccc", "c")) (_.length < 2) should equal(List("aa", "c", "ccc", "c"))
   }
 }
 

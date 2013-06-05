@@ -60,7 +60,7 @@ object List { // `List` companion object
 
   def dropWhile[A](l: List[A])(f: A => Boolean): List[A] = l match {
     case Nil => Nil
-    case Cons(head,tail) => if(f(head)) dropWhile(tail)(f) else Cons(head, dropWhile(tail)(f))
+    case Cons(head,tail) => if(f(head)) dropWhile(tail)(f) else l
   }
 
   def setHead[A](l: List[A])(h: A): List[A] = Cons(h, tail(l))
