@@ -1,5 +1,8 @@
 package fpinscala.errorhandling
 
+import scala.{Option, Some}
+import fpinscala.errorhandling.Some
+
 sealed trait Option[+A] {
   def map[B](f: A => B): Option[B] = this match {
     case None => None
@@ -89,13 +92,15 @@ object Option {
     mkMatcher(pat2) map     (g => 
     f(s) && g(s)))
 
-  def variance(xs: Seq[Double]): Option[Double] = sys.error("todo")
+  def variance(xs: Seq[Double]): Option[Double] = mean(xs).map(media => xs.map(value => math.pow(value - media, 2))).flatMap(mean(_))
 
-  def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = ???
+  def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = a.flatMap(x => b.map(y =>f(x, y)))
 
-  def bothMatch_2(pat1: String, pat2: String, s: String): Option[Boolean] = sys.error("todo")
+  def bothMatch_2(pat1: String, pat2: String, s: String): Option[Boolean] = map2(mkMatcher(pat1), mkMatcher(pat2))(_(s) && _(s))
 
-  def sequence[A](a: List[Option[A]]): Option[List[A]] = sys.error("todo")
+  def sequence[A](a: List[Option[A]]): Option[List[A]] = a.foldLeft(Some(List()): Option[List[A]])(
+    (acc, x) => acc.flatMap(l => x.map(elem => elem :: l))
+  )
 
   def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = sys.error("todo")
 }
