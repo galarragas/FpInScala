@@ -19,7 +19,7 @@ trait Stream[+A] {
 
   def takeWhileWithFold(p: A => Boolean): Stream[A] = foldRight(Stream.empty: Stream[A])((elem, acc) => { print("."); if (p(elem)) Stream.cons(elem, acc) else Stream.empty[A] } )
 
-  def forAll(p: A => Boolean): Boolean = sys.error("todo")
+  def forAll(p: A => Boolean): Boolean = foldRight(true)({ case (value, status) => p(value) && status } )
 
   def toList: List[A] = foldRight(List.empty: List[A])((elem, accumulator) => elem :: accumulator)
 
@@ -52,6 +52,8 @@ trait Stream[+A] {
 
   def mapViaUnfold[B](f: A => B): Stream[B] =
     Stream.unfold(this)(_.uncons.map ( tuple => (f(tuple._1), tuple._2) ))
+
+  def append[B>:A](other: Stream[B]) : Stream[B] = foldRight(other)( (head, tail) => Stream.cons(head, tail) )
 }
 
 object Stream {
@@ -79,9 +81,6 @@ object Stream {
     cons(0, cons(1, fib(0, 1)))
   }
 
-
-
-
   def unfoldUberto[A, S](z: S)(f: S => Option[(A, S)]): Stream[A] = {
     def unfoldr(state: S): Stream[A] = {
         val next = f(state)
@@ -101,6 +100,17 @@ object Stream {
     }
 
   def startsWith[A](s: Stream[A], s2: Stream[A]): Boolean = sys.error("todo")
+
+  def startsWithStefano[A](stream: Stream[A], prefix: Stream[A]): Boolean = {
+    val streamTerminatedWithNone = stream.map(Some(_)).append(consts(None))
+    val prefixTerminatedWithNone = prefix.map(Some(_)).append(consts(None))
+
+    zip(streamTerminatedWithNone, prefixTerminatedWithNone) takeWhile ( { case (left, right) => left.isDefined || right.isDefined } ) forAll  {
+      case (Some(left), Some(right)) => left == right
+      case (Some(_), None) => true
+      case _ => false
+    }
+  }
 
   def zip[A, B](s: Stream[A], s2: Stream[B]) : Stream[(A,B)] = unfold((s, s2))(
   {
