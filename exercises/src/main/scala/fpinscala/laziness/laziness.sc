@@ -1,5 +1,7 @@
 import fpinscala.laziness.prova._
 
+Stream(1, 2, 3).tails.toList.map(_.toList)
+
 //val emptyStream = Stream.empty
 //
 //
@@ -71,12 +73,28 @@ import fpinscala.laziness.prova._
 //Stream.startsWithStefano(Stream(1,2,3), Stream(2,1,2,3))
 //Stream.startsWithStefano(Stream(1,2,3,31,2,23,31,2,3), Stream(1))
 
-Stream.startsWithStefano(Stream(1,2,3), Stream(1,2,3, 4))
-Stream.startsWithStefano(Stream(1,2,3), Stream(1,2))
-
+//Stream.startsWithStefano(Stream(1,2,3), Stream(1,2,3, 4))
+//Stream.startsWithStefano(Stream(1,2,3), Stream(1,2))
 
 
 //Stream.zip(Stream(1,2,3,31,2,23,31,2,3), Stream(1,3,5,12)).toList
 
 //Stream(1,2,3,31,2,23,31,2,3).forAll(_ > 0)
 //Stream(2,3,31,2,23,31,2,3).forAll(_ > 1)
+
+//Stream(1,2,3).scanRightStefano(0)((a, b) => { Console.printf("(%d + %d) ", a, b); a + b }).toList
+//
+//
+//
+//
+//
+//Stream(1,2,3).scanRightStefanoWithFold(0)((a, b) => { Console.printf("(%d + %d) ", a, b); a + b }).toList
+
+
+
+
+
+
+
+
+
