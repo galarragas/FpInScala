@@ -1,4 +1,4 @@
-package fpinscala.state
+package fpinscala.state.exercises
 
 
 trait RNG {
@@ -28,21 +28,68 @@ object RNG {
       (f(a), rng2)
     }
 
-  def positiveInt(rng: RNG): (Int, RNG) = sys.error("todo")
+  def positiveInt(rng: RNG): (Int, RNG) = {
+    val (_nextInt, nextRNG) = rng.nextInt
 
-  def double(rng: RNG): (Double, RNG) = sys.error("todo")
+    if(Int.MinValue == _nextInt) positiveInt(nextRNG)
+    else (Math.abs(_nextInt), nextRNG)
+  }
 
-  def intDouble(rng: RNG): ((Int,Double), RNG) = sys.error("todo")
+  def double(rng: RNG): (Double, RNG) = {
+    val (nextInt, nextRng) = positiveInt(rng)
 
-  def doubleInt(rng: RNG): ((Double,Int), RNG) = sys.error("todo")
+    (nextInt.toDouble/Int.MaxValue.toDouble, nextRng)
+  }
 
-  def double3(rng: RNG): ((Double,Double,Double), RNG) = sys.error("todo")
+  def doubleWithMap(rng: RNG): (Double, RNG) =  map(positiveInt)( _.toDouble/Int.MaxValue.toDouble ) (rng)
 
-  def ints(count: Int)(rng: RNG): (List[Int], RNG) = sys.error("todo")
+  def intDouble(rng: RNG): ((Int,Double), RNG) = {
+    val (ni, nr) = rng.nextInt
+    val (nd, nnr) = double(nr)
+    ((ni, nd), nnr)
 
-  def positiveMax(n: Int): Rand[Int] = sys.error("todo")
+  }
 
-  def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = sys.error("todo")
+  def doubleInt(rng: RNG): ((Double,Int), RNG) = {
+    val ((ni, nd), nr) = intDouble(rng)
+    ((nd, ni), nr)
+  }
+
+  def double3(rng: RNG): ((Double,Double,Double), RNG) = {
+    val (nd1, nr1) = double(rng)
+    val (nd2, nr2) = double(nr1)
+    val (nd3, nn3) = double(nr2)
+    ((nd1, nd2, nd3), nn3)
+  }
+
+  def ints(count: Int)(rng: RNG): (List[Int], RNG) = {
+    if(count == 0) (List.empty[Int], rng)
+    else {
+      val (nextInt, nextRng) = int(rng)
+      val (nextList, _rng) = ints(count -1)(nextRng)
+
+      (nextInt :: nextList, _rng)
+    }
+  }
+
+  def intStream(rng: RNG) : (Stream[(Int, RNG)]) = {
+    val head = int(rng)
+    Stream.cons(head, intStream(head._2) )
+  }
+
+  def positiveMax(n: Int): Rand[Int] = map(positiveInt)(_ % n)
+
+  def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = rng => {
+    val (a, rnga) = ra(rng)
+    val (b, rngb) = rb(rnga)
+
+    (f(a, b), rngb)
+  }
+
+  def intDoubleWithMap(rng: RNG): ((Int,Double), RNG) = map2(int, double)((a, b) => (a, b))(rng)
+
+  def doubleIntWithMap(rng: RNG): ((Double,Int), RNG) = map2(double, int)((a, b) => (a, b))(rng)
+  def doubleIntWithMap2(rng: RNG): ((Double,Int), RNG) = map2(int, double)((a, b) => (b, a))(rng)
 
   def sequence[A](fs: List[Rand[A]]): Rand[List[A]] = sys.error("todo")
 
@@ -50,12 +97,25 @@ object RNG {
 }
 
 case class State[S,+A](run: S => (A, S)) {
-  def map[B](f: A => B): State[S, B] =
-    sys.error("todo")
-  def map2[B,C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
-    sys.error("todo")
+  def map[B](f: A => B): State[S, B] = State( state => { val baseVal = run(state)
+                                                          (f(baseVal._1), baseVal._2)
+                                                        }
+                                            )
+
+  def map2[B,C](that: State[S, B])(f: (A, B) => C): State[S, C] =
+     State( state => {
+                  val thisBaseVal : (A, S) = run(state)
+                  val thatBaseVal : (B, S) = that.run(thisBaseVal._2)
+                  ( f(thisBaseVal._1, thatBaseVal._1), thatBaseVal._2 )
+                }
+          )
+
   def flatMap[B](f: A => State[S, B]): State[S, B] =
-    sys.error("todo")
+    State( state => {
+                  val baseVal = run(state)
+                  f(baseVal._1).run(baseVal._2)
+            }
+        )
 }
 
 sealed trait Input
@@ -66,5 +126,19 @@ case class Machine(locked: Boolean, candies: Int, coins: Int)
 
 object State {
   type Rand[A] = State[RNG, A]
-  def simulateMachine(inputs: List[Input]): State[Machine, Int] = sys.error("todo")
+  def simulateMachine(inputs: List[Input]): State[Machine, Int] = {
+    def machineEventHandler(currStatus: Machine, input: Input): Machine = currStatus match {
+      case Coin => currStatus match {
+        case Machine(false, _, _) => currStatus //Ignoring any coin when unlocked
+        case Machine(true, 0, _) => currStatus
+        case Machine(true, candies, coins) => Machine(false, candies, coins + 1)
+      }
+      case Turn => currStatus match {
+        case Machine(true, _, _) => currStatus
+        case Machine(false, candies, coins) => Machine(true, candies -1, coins)
+      }
+    }
+
+    val endStatus = inputs.foldLeft (Machine(locked = true, candies = 10, coins = 0)) (machineEventHandler(_, _))
+  }
 }

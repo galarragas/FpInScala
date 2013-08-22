@@ -2,7 +2,7 @@ package fpinscala
 package applicative
 
 import monads.Functor
-import state._
+import state.exercises._
 import State._
 import StateUtil._ // defined at bottom of this file
 import monoids._

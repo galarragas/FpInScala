@@ -1,4 +1,4 @@
-package fpinscala.laziness.prova
+package fpinscala.laziness
 
 import scala.Option
 
